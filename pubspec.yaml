@@ -3,11 +3,9 @@ description: |
   Drifter is a flutter plugin work with Devices. 
   Device identifier access, idfa, idfv, imei, imsi, emid, deviceId.
   Permission access, check permission, request permison.
-<<<<<<< HEAD
+
 version: 0.2.0
-=======
-version: 0.1.2
->>>>>>> 82c3d74292262b8dc183fe43a7a947e94e964372
+
 author: Wener <wenermail@gmail.com>
 homepage: https://github.com/wenerme/drifter
 
