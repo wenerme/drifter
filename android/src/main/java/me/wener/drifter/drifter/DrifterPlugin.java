@@ -3,10 +3,13 @@ package me.wener.drifter.drifter;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
+
+import android.os.Build;
 import android.telephony.TelephonyManager;
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import io.flutter.plugin.common.MethodCall;
@@ -38,6 +41,8 @@ public class DrifterPlugin implements MethodCallHandler {
   private Registrar registrar;
   private Context context;
   private boolean debug = false;
+
+  private static final String PREF_UNIQUE_ID = "PREF_UNIQUE_ID_99599";
 
   private static class Options {
     private boolean preferNull = true;
@@ -218,7 +223,13 @@ public class DrifterPlugin implements MethodCallHandler {
             r = telephonyManager.getMeid(slotIndex);
             break;
           case "getImei":
-            r = telephonyManager.getImei(slotIndex);
+            if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+              r = getUUID(registrar.activity());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+              r = telephonyManager.getImei(slotIndex);
+            } else {
+              r = telephonyManager.getDeviceId(slotIndex);
+            }
             break;
           case "getDeviceId":
             r = telephonyManager.getDeviceId(slotIndex);
@@ -230,7 +241,13 @@ public class DrifterPlugin implements MethodCallHandler {
             r = telephonyManager.getMeid();
             break;
           case "getImei":
-            r = telephonyManager.getImei();
+            if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+              r = getUUID(registrar.activity());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+              r = telephonyManager.getImei();
+            } else {
+              r = telephonyManager.getDeviceId();
+            }
             break;
           case "getDeviceId":
             r = telephonyManager.getDeviceId();
@@ -241,6 +258,21 @@ public class DrifterPlugin implements MethodCallHandler {
     } catch (Throwable e) {
       handleException(result, e);
     }
+  }
+
+  private synchronized static String getUUID(Context context) {
+
+    SharedPreferences sharedPrefs = context.getSharedPreferences(
+            PREF_UNIQUE_ID, Context.MODE_PRIVATE);
+    String uniqueID = sharedPrefs.getString(PREF_UNIQUE_ID, null);
+    if (uniqueID == null) {
+      uniqueID = UUID.randomUUID().toString();
+      SharedPreferences.Editor editor = sharedPrefs.edit();
+      editor.putString(PREF_UNIQUE_ID, uniqueID);
+      editor.commit();
+    }
+
+    return uniqueID;
   }
 
   private void handleException(Result result, Throwable e) {
